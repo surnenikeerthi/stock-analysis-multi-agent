@@ -117,11 +117,12 @@ def stock_analysis(state: stock_analyser):
     full_information = state.get('full_information', '')
     for agent in agents:
         internalstate= agent_registry[agent].graph.invoke({'context':state['context']})
-
+        print("is this reachd\e")
         if(agent == 'newsAnalysisAgent'):
             full_information += str(internalstate['news'])
         elif (agent == 'PortfolioManagerAgent'):
-            portfolio_response = internalstate['response']
+            portfolio_response = internalstate['messages']
+
             return {'response': portfolio_response, 'full_information': full_information}
         else:
             full_information += internalstate['analysis']
