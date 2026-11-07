@@ -64,7 +64,7 @@ def data_fetcher(stock_ticker, container, parameter):
 
 
 def get_stock_cash_flow(stock_ticker_obj):
-    return stock_ticker_obj.cash_flow
+    return stock_ticker_obj.get_cash_flow()
 
 #node to get the finance and make decision on is it in good case or not
 def get_stock_financials(stock_ticker_obj):
@@ -88,13 +88,23 @@ def stock_analysis(state: stock_analyser):
         {query}
         
         Available agents:
-        - income_statement_agent
-        - balance_sheet_analysis_agent
-        - cashFlowAnalysisAgent
-        - technical_agent
-        - newsAnalysisAgent
-        - PortfolioManagerAgent
-        
+        - income_statement_agent: revenue, profit, EPS, margins and their growth
+        - balance_sheet_analysis_agent: assets, liabilities, debt, liquidity ratios
+        - cashFlowAnalysisAgent: operating cash flow, capital expenditure, free cash flow
+        - technical_agent: price trend, moving averages, RSI, MACD, support and resistance
+        - newsAnalysisAgent: recent news about the company
+        - PortfolioManagerAgent: the user's own holdings - buying, selling, correcting, removing
+          or listing stocks they own. Pick ONLY this agent when the query is about recording or
+          checking the user's portfolio rather than analysing a stock.
+
+        Examples:
+        - "I bought 10 Infosys at 1500" -> ["PortfolioManagerAgent"]
+        - "I sold 5 TCS shares" -> ["PortfolioManagerAgent"]
+        - "What stocks do I own?" -> ["PortfolioManagerAgent"]
+        - "Correct my TCS entry" or "remove Infosys from my portfolio" -> ["PortfolioManagerAgent"]
+        - "Should I buy Infosys?" -> analysis agents only, never PortfolioManagerAgent
+        A message that records or checks the user's own holdings never needs the analysis agents.
+
         Return ONLY valid JSON.
         
         example Output:
@@ -109,7 +119,8 @@ def stock_analysis(state: stock_analyser):
     print("heyy")
     print(query)
     print(type(query))
-    chain = llm_chains.generatellmchain_withparser(llm_normal,prompt)
+    # temperature 0: the same message must pick the same agents, also when it re-runs after an interrupt
+    chain = llm_chains.generatellmchain_withparser(llm_normal.bind(temperature=0),prompt)
     response = chain.invoke({'query':query})
     print(f"RAW LLM RESPONSE: {response!r}")
     agents = response['agents']
@@ -121,7 +132,7 @@ def stock_analysis(state: stock_analyser):
         if(agent == 'newsAnalysisAgent'):
             full_information += str(internalstate['news'])
         elif (agent == 'PortfolioManagerAgent'):
-            portfolio_response = internalstate['messages']
+            portfolio_response = internalstate['messages'][-1].content
 
             return {'response': portfolio_response, 'full_information': full_information}
         else:

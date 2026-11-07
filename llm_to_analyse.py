@@ -31,20 +31,23 @@ def prompt_validation(state : prompt_orchestrator):
             "Book me a bus ticket."
             "Write a Python game."
             
-            "Return exactly one lowercase word:"
+            "Return exactly one lowercase word just one of these strictly only for query:"
             "stock"
             "general"
             "reject"                              
             
             "Query: {query}")
     llm_chain = llm_chains.generatellmchain(llm.llm_normal, prompt)
-    decision = llm_chain.invoke({'query': state['messages']}).content
+    # passing in full messages (full message history) for short term memory, for actual answering from current chat
+    decision = llm_chain.invoke({'query': query}).content
     print("hhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
     print(decision)
     return {'decision': decision}
 
 def decision_maker(state:prompt_orchestrator):
     decision = state['decision']
+    print("decision")
+    print(decision)
     if decision == 'stock':
         query = state['messages'][-1].content
         classifier_label = stock_query_critic(query)
@@ -193,6 +196,7 @@ Output:
 Return ONLY the JSON object. Do not include any explanation, markdown, or additional text.
 """)
     chain = llm_chains.generatellmchain(llm.llm_normal, prompt)
+    #here i am passing only last , so when asking for summary, that call/ processing yet to be fixed
     response = chain.invoke({'query' : state['messages'][-1].content})
     json_response = json.loads(response.content)
     stock_name = json_response['stock_name']

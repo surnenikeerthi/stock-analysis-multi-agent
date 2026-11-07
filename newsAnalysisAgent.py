@@ -18,7 +18,7 @@ def get_news_from_yfinance(state:newsAnalysisAgent):
 
 def fetch_news_from_full(news_full):
     top_5_news = []
-    for i in range(10):
+    for i in range(min(10, len(news_full))):
         if(i<6):
             top_5_news.append(news_full[i]['content']['summary'])
         else:
@@ -51,6 +51,7 @@ Return ONLY JSON:
     news = state['news']
     chain = llm_chains.generatellmchain_withparser(llm.llm_normal, prompt)
     response = chain.invoke({'news': news})
+    extra_news = []
     if (response['need_more_context']):
         extra_news = news_fetch_based_on_header(response['titles'], state['full_news'])
     #response = graph.invoke({'news': news})
